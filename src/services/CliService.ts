@@ -46,6 +46,7 @@ export class CliService extends EventEmitter {
     private _serverUrl = "";
     private _version: string | null = null;
     private cliPath: string;
+    private _projectRoot: string | null = null;
 
     constructor(cliPath = "retype") {
         super();
@@ -174,7 +175,7 @@ export class CliService extends EventEmitter {
         this.emit(
             CLI_EVENTS.log,
             CLI_LOG.commandPrefix
-                .replace("{cli}", this.cliPath)
+                .replace("{cli}", "retype")
                 .replace("{args}", logArgs.join(" "))
         );
         this.emit(
@@ -182,6 +183,8 @@ export class CliService extends EventEmitter {
             CLI_LOG.workingDir.replace("{root}", projectRoot)
         );
         this.emit(CLI_EVENTS.log, "");
+
+        this._projectRoot = projectRoot;
 
         try {
             this.process = spawn(this.cliPath, args, {
@@ -242,43 +245,30 @@ export class CliService extends EventEmitter {
     }
 
     /**
-     * Stop the running Retype server process.
+     * Stop the running Retype server by spawning `retype stop` in the
+     * same project directory that was passed to `start()`.
      */
     stop(): void {
-        if (!this.process) {
+        if (!this.isRunning) {
             return;
         }
 
         this.emit(CLI_EVENTS.log, CLI_LOG.stopping);
-
-        if (process.platform === "win32") {
-            try {
-                spawn("taskkill", [
-                    "/pid",
-                    String(this.process.pid),
-                    "/f",
-                    "/t",
-                ]);
-            } catch {
-                this.process.kill();
-            }
-        } else {
-            this.process.kill("SIGTERM");
-        }
+        this.execStop();
     }
 
     /**
-     * Stop the server and wait for the process to exit, or force-kill
-     * after the timeout.
+     * Stop the server and wait for the process to fully exit.
+     * Falls back to resolving after the timeout if the process does
+     * not exit in time.
      */
-    async stopAsync(timeoutMs = 3000): Promise<void> {
-        if (!this.process) {
+    async stopAsync(timeoutMs = 5000): Promise<void> {
+        if (!this.isRunning) {
             return;
         }
 
         return new Promise((resolve) => {
             const timer = setTimeout(() => {
-                this.process?.kill("SIGKILL");
                 resolve();
             }, timeoutMs);
 
@@ -289,6 +279,56 @@ export class CliService extends EventEmitter {
 
             this.stop();
         });
+    }
+
+    /**
+     * Spawn `retype stop` in the project root directory.
+     * Output from the stop command is forwarded to the log.
+     */
+    private execStop(): void {
+        const cwd = this._projectRoot ?? undefined;
+
+        try {
+            const stopProc = spawn(this.cliPath, ["stop"], {
+                cwd,
+                env: enrichedEnv(),
+                shell: process.platform === "win32",
+            });
+
+            stopProc.stdout?.setEncoding("utf8");
+            stopProc.stderr?.setEncoding("utf8");
+
+            stopProc.stdout?.on("data", (data: string) => {
+                for (const line of data.split(/\r?\n/)) {
+                    if (line) {
+                        this.emit(CLI_EVENTS.log, line);
+                    }
+                }
+            });
+
+            stopProc.stderr?.on("data", (data: string) => {
+                for (const line of data.split(/\r?\n/)) {
+                    if (line) {
+                        this.emit(CLI_EVENTS.log, line);
+                    }
+                }
+            });
+
+            stopProc.on("error", (err) => {
+                this.emit(
+                    CLI_EVENTS.log,
+                    CLI_LOG.errorPrefix.replace("{message}", err.message)
+                );
+            });
+        } catch (err) {
+            this.emit(
+                CLI_EVENTS.log,
+                CLI_LOG.errorPrefix.replace(
+                    "{message}",
+                    (err as Error).message
+                )
+            );
+        }
     }
 
     /**
@@ -314,7 +354,7 @@ export class CliService extends EventEmitter {
                 this.emit(
                     CLI_EVENTS.log,
                     CLI_LOG.commandPrefix
-                        .replace("{cli}", this.cliPath)
+                        .replace("{cli}", "retype")
                         .replace("{args}", logArgs.join(" "))
                 );
                 this.emit(

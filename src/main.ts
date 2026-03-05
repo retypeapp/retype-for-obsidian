@@ -6,7 +6,6 @@
 
 import {
     Plugin,
-    Notice,
     addIcon,
     FileSystemAdapter,
 } from "obsidian";
@@ -19,7 +18,8 @@ import {
 
 import { CliService } from "./services/CliService";
 import { ProjectDetector } from "./services/ProjectDetector";
-import { RetypeInstaller } from "./services/RetypeInstaller";
+import { CliDetector, DETECTOR_EVENTS, type CliDetectionResult, type PackageManagerResult } from "./services/CliDetector";
+import { InstallService } from "./services/InstallService";
 import { RetypePanelView } from "./views/PanelView";
 
 import {
@@ -31,10 +31,9 @@ import {
     LEGACY_KEY_FIELD,
     CSS,
     STATUS_BAR,
-    NOTICES,
     CLI_EVENTS,
     LABELS,
-    INSTALLER,
+    DETECTOR,
 } from "./config";
 
 // ── RetypePlugin ──────────────────────────────────────────────────────────
@@ -43,7 +42,13 @@ export default class RetypePlugin extends Plugin {
     settings!: RetypePluginSettings;
     cli!: CliService;
     detector!: ProjectDetector;
-    installer!: RetypeInstaller;
+    cliDetector!: CliDetector;
+    installService!: InstallService;
+
+    /** Last CLI detection result — shared with the panel view. */
+    cliDetection: CliDetectionResult = { found: false };
+    /** Last package manager detection result — shared with the panel view. */
+    pmDetection: PackageManagerResult | null = null;
 
     /** Retype license key — loaded from SecretStorage, held in memory only. */
     retypeProKey = "";
@@ -63,7 +68,19 @@ export default class RetypePlugin extends Plugin {
         // Core services
         this.cli = new CliService("retype");
         this.detector = new ProjectDetector(this.app);
-        this.installer = new RetypeInstaller(this.getPluginDir());
+        this.cliDetector = new CliDetector();
+        this.installService = new InstallService(this.cliDetector);
+
+        // When CLI is detected (via polling or redetect), update state
+        this.cliDetector.on(DETECTOR_EVENTS.stateChanged, (result: CliDetectionResult) => {
+            this.cliDetection = result;
+            this.pmDetection = this.cliDetector.lastPmResult;
+            if (result.found && result.path) {
+                this.cli.updateCliPath(result.path);
+                console.log(DETECTOR.usingCli, result.path);
+            }
+            this.sidebarView?.onDetectionComplete();
+        });
 
         // ── Sidebar view ──────────────────────────────────────────
         this.registerView(VIEW_TYPE_RETYPE_SIDEBAR, (leaf) => {
@@ -111,19 +128,6 @@ export default class RetypePlugin extends Plugin {
             callback: () => this.cli.stop(),
         });
 
-        this.addCommand({
-            id: COMMANDS.toggleServer.id,
-            name: COMMANDS.toggleServer.name,
-            callback: async () => {
-                if (this.cli.isRunning) {
-                    this.cli.stop();
-                } else {
-                    await this.activateSidebar();
-                    this.sidebarView?.onStartClick();
-                }
-            },
-        });
-
         // ── Active leaf change ────────────────────────────────────
         this.registerEvent(
             this.app.workspace.on("active-leaf-change", async () => {
@@ -134,13 +138,12 @@ export default class RetypePlugin extends Plugin {
         // ── Settings tab ──────────────────────────────────────────
         this.addSettingTab(new RetypeSettingTab(this.app, this));
 
-        // ── Auto-resolve CLI (non-blocking) ───────────────────────
-        this.checkAndPrepareCli().catch(() => {
-            new Notice(NOTICES.setupFailed);
-        });
+        // ── Detect CLI (non-blocking) ─────────────────────────────
+        this.detectCli();
     }
 
     async onunload(): Promise<void> {
+        this.cliDetector?.stopPolling();
         if (this.cli?.isRunning) {
             await this.cli.stopAsync(1500);
         }
@@ -302,61 +305,29 @@ export default class RetypePlugin extends Plugin {
         return adapter.getFullPath(this.manifest.dir ?? "");
     }
 
-    // ── CLI Auto-Resolution ───────────────────────────────────────
+    // ── CLI Detection ─────────────────────────────────────────────
 
     /**
-     * Ensures a usable Retype binary is available, installing from npm
-     * if needed. Called once on load; never blocks plugin startup.
+     * Detect whether the Retype CLI is available on the system PATH.
+     * Also detects available package managers. Results are stored on the
+     * plugin instance and shared with the panel view.
      *
-     * Resolution order:
-     *  1. Global `retype` on enriched PATH (handles macOS GUI apps)
-     *  2. Local binary already present at `[pluginDir]/node_modules/retypeapp/…`
-     *  3. Auto-install via `npm install retypeapp` into the plugin directory
-     *  4. Error notice — npm unavailable or install failed
+     * Never blocks plugin startup — runs asynchronously.
      */
-    async checkAndPrepareCli(): Promise<void> {
-        // 1. Global install (enriched PATH resolves nvm / homebrew / dotnet)
-        const globalBin = await this.installer.resolveGlobalBinary();
-        if (globalBin) {
-            this.cli.updateCliPath(globalBin);
-            console.log(INSTALLER.usingGlobal, globalBin);
-            await this.sidebarView?.refreshCliVersion();
-            return;
+    async detectCli(): Promise<void> {
+        this.cliDetection = await this.cliDetector.detect();
+        this.pmDetection = await this.cliDetector.detectPackageManager();
+
+        if (this.cliDetection.found && this.cliDetection.path) {
+            this.cli.updateCliPath(this.cliDetection.path);
+            console.log(DETECTOR.usingCli, this.cliDetection.path);
+        } else {
+            console.log(DETECTOR.cliNotDetected);
+            // Start polling so we detect external installs automatically
+            this.cliDetector.startPolling();
         }
 
-        // 2. Previously installed local binary
-        const localBin = this.installer.findLocalBinary();
-        if (localBin) {
-            this.cli.updateCliPath(localBin);
-            console.log(INSTALLER.usingLocal, localBin);
-            await this.sidebarView?.refreshCliVersion();
-            return;
-        }
-
-        // 3. Auto-install from npm
-        const notice = new Notice(NOTICES.installing, 0);
-        try {
-            const binPath = await this.installer.install((line) => {
-                this.sidebarView?.appendLog(line);
-            });
-
-            this.cli.updateCliPath(binPath);
-            notice.hide();
-            new Notice(NOTICES.installed, 4000);
-            console.log(INSTALLER.usingLocal, binPath);
-            await this.sidebarView?.refreshCliVersion();
-        } catch (err) {
-            notice.hide();
-            const message = (err as Error).message;
-            console.error(INSTALLER.notFound, message);
-            new Notice(
-                NOTICES.installFailed.replace("{message}", message),
-                0
-            );
-            this.sidebarView?.appendLog(
-                `[ERROR] ${message}`,
-                CSS.logLineError
-            );
-        }
+        // Notify the sidebar view to render the correct state
+        this.sidebarView?.onDetectionComplete();
     }
 }

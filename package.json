@@ -19,9 +19,7 @@
     ],
     "author": "Retype",
     "license": "Apache-2.0",
-    "dependencies": {
-        "retypeapp": "latest"
-    },
+    "dependencies": {},
     "devDependencies": {
         "@types/node": "^20.11.0",
         "builtin-modules": "^3.3.0",

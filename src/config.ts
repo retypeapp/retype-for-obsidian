@@ -52,10 +52,6 @@ export const COMMANDS = {
         id: "stop-server",
         name: "Stop Retype server",
     },
-    toggleServer: {
-        id: "toggle-server",
-        name: "Toggle Retype server (start / stop)",
-    },
 } as const;
 
 // ── Settings ──────────────────────────────────────────────────────────────
@@ -84,14 +80,14 @@ export const LABELS = {
     pluginId: "retype",
     /** Retype Key setting. */
     settingKeyName: "Retype Key",
-    settingKeyDesc: "Your Retype Pro or Community key.",
+    settingKeyDesc: "Your Retype Pro or Community key",
     settingKeyPlaceholder: "Paste key here",
     /** Auto-open browser setting. */
     settingAutoOpenName: "Open browser automatically",
-    settingAutoOpenDesc: "Open the default web browser when the Retype server starts.",
+    settingAutoOpenDesc: "Open the default web browser when the Retype server starts",
     /** Show status bar setting. */
     settingStatusBarName: "Show status bar item",
-    settingStatusBarDesc: "Show Retype server status in the Obsidian status bar.",
+    settingStatusBarDesc: "Show Retype server status in the Obsidian status bar",
     /** Ribbon button tooltip. */
     ribbonTooltip: "Retype",
     /** Gear button tooltip. */
@@ -101,7 +97,7 @@ export const LABELS = {
     /** Output panel heading. */
     outputTitle: "Output",
     /** Initial log line shown when the panel opens. */
-    initialLogLine: "Click \u25B6 Start to launch the Retype server.",
+    initialLogLine: "Click Start to launch the Retype server",
     /** Project info — no project found. */
     noProjectName: "No project",
     noProjectPath: "No retype.yml found in vault",
@@ -111,6 +107,17 @@ export const LABELS = {
     startButton: "Start",
     stopButton: "Stop",
     buildButton: "Build",
+    /** Install state labels. */
+    step1Heading: "Step 1 \u2014 Plugin installed \u2705",
+    step1Message: "Add the Retype CLI to continue, see Step 2",
+    step2Heading: "Step 2 \u2014 Add Retype CLI",
+    installButton: "Retype CLI",
+    installingButton: "Installing\u2026",
+    manualInstallHint: "Or, manually install by running the following command:",
+    installGuideLabel: "Manual installation guide",
+    installGuideUrl: "https://retype.com/guides/installation/",
+    copyTooltip: "Copy to clipboard",
+    copiedTooltip: "Copied!",
 } as const;
 
 // ── Status ────────────────────────────────────────────────────────────────
@@ -138,13 +145,11 @@ export const STATUS_BAR = {
 export const NOTICES = {
     cliReady: "Retype CLI found \u2713",
     cliNotFound: "Retype CLI not found. npm is not available to install it automatically. Install Retype manually \u2014 see https://retype.com/guides/getting-started/",
-    installing: "Installing Retype CLI\u2026 this may take a moment.",
-    installed: "Retype CLI installed \u2713",
+    installSuccess: "Retype CLI installed \u2713",
     installFailed: "Retype CLI installation failed: {message}",
-    setupFailed: "Retype CLI setup failed. Open the Retype panel for details.",
     buildComplete: "Retype build completed \u2713",
     buildFailed: "Retype build failed: {message}",
-    stopBeforeBuild: "Stop the Retype server before running a build.",
+    stopBeforeBuild: "Stop the Retype server before running a build",
 } as const;
 
 // ── CLI Events ────────────────────────────────────────────────────────────
@@ -168,10 +173,10 @@ export const CLI_LOG = {
     commandPrefix: "> {cli} {args}",
     workingDir: "  Working directory: {root}",
     errorPrefix: "[ERROR] {message}",
-    keyInvalid: "Retype key is invalid. Check your Pro key and try again.",
+    keyInvalid: "Retype key is invalid. Check your Pro key and try again",
     cliNotFound: "Retype CLI not found at \"{path}\". Install it with: npm install retypeapp --global",
     processError: "Process error: {message}",
-    alreadyRunning: "Server is already running. Stop it first.",
+    alreadyRunning: "Server is already running. Stop it first",
 } as const;
 
 // ── CSS Classes ───────────────────────────────────────────────────────────
@@ -222,6 +227,15 @@ export const CSS = {
     logLineSuccess: "retype-log-line-success",
     /** Status bar. */
     statusBar: "retype-status-bar",
+    /** Install gate UI. */
+    installSection: "retype-install-section",
+    installStepHeading: "retype-install-step-heading",
+    installStepMessage: "retype-install-step-message",
+    installBtn: "retype-install-btn",
+    installBtnDisabled: "retype-install-btn-disabled",
+    installCode: "retype-install-code",
+    installCodeCopy: "retype-install-code-copy",
+    installGuide: "retype-install-guide",
 } as const;
 
 // ── Patterns ──────────────────────────────────────────────────────────────
@@ -252,18 +266,26 @@ export const MAX_LOG_LINES = 500;
 /** Key redaction placeholder. */
 export const KEY_REDACTED = "********";
 
-// ── Installer Messages ────────────────────────────────────────────────────
+// ── Detector Messages ─────────────────────────────────────────────────────
 
-export const INSTALLER = {
-    unsupportedPlatform: "Platform \"{platform}\" is not supported by retypeapp.",
-    usingGlobal: "Using global Retype CLI:",
-    usingLocal: "Using local Retype CLI:",
-    npmNotFound: "npm is not available on this system. Install Retype manually \u2014 see https://retype.com/guides/getting-started/",
-    npmInstalling: "Running: npm install retypeapp\u2026",
-    npmError: "npm install failed: {message}",
-    npmExitCode: "npm install exited with code {code}",
-    binaryNotFound: "npm install succeeded but the Retype binary was not found at: {path}",
-    notFound: "Retype CLI not found. Install Retype globally or ensure npm is available \u2014 see https://retype.com/guides/getting-started/",
+export const DETECTOR = {
+    usingCli: "Using Retype CLI:",
+    cliNotDetected: "Retype CLI not detected on system PATH",
+    npmInstallCommand: "npm install retypeapp --global",
+    yarnInstallCommand: "yarn global add retypeapp",
+    dotnetInstallCommand: "dotnet tool install retypeapp --global",
+    /** How often (ms) to poll for an externally installed CLI. */
+    pollIntervalMs: 5000,
+} as const;
+
+// ── Install Service Messages ──────────────────────────────────────────────
+
+export const INSTALL_SERVICE = {
+    running: "Running: {command}\u2026",
+    complete: "\nInstallation complete \u2713",
+    spawnError: "[ERROR] Install failed: {message}",
+    exitCode: "[ERROR] Install exited with code {code}",
+    notFoundAfterInstall: "[ERROR] Installation succeeded but retype was not found on PATH after install",
 } as const;
 
 // ── Legacy Settings Keys ──────────────────────────────────────────────────

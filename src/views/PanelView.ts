@@ -37,7 +37,10 @@ export class RetypePanelView extends ItemView {
     private cli: CliService;
     private detector: ProjectDetector;
 
-    // DOM references
+    // State: controls which UI is rendered (install vs. ready)
+    private isCliAvailable = false;
+
+    // DOM references — ready state
     private statusDot!: HTMLElement;
     private statusText!: HTMLElement;
     private statusCard!: HTMLElement;
@@ -49,8 +52,14 @@ export class RetypePanelView extends ItemView {
     private logEl!: HTMLElement;
     private projectEl!: HTMLElement;
 
+    // DOM references — install state
+    private installSection!: HTMLElement;
+    private installBtn!: HTMLButtonElement | null;
+    private outputSection!: HTMLElement;
+
     private currentProject: RetypeProject | null = null;
     private logLines: string[] = [];
+    private isInstalling = false;
 
     // Bound event handlers (stored so they can be removed in onClose)
     private onStatusChanged: (status: ServerStatus) => void = () => {};
@@ -90,28 +99,36 @@ export class RetypePanelView extends ItemView {
 
     /** Build the panel UI, bind CLI events, and load initial data. */
     async onOpen(): Promise<void> {
+        // Sync state from plugin detection results
+        this.isCliAvailable = this.plugin.cliDetection.found;
+
         this.contentEl.empty();
         this.contentEl.addClass(CSS.panel);
 
         this.buildHeader();
-        this.buildProjectInfo();
-        this.buildStatusCard();
-        this.buildActions();
-        this.buildLogSection();
 
+        if (this.isCliAvailable) {
+            this.buildReadyState();
+        } else {
+            this.buildInstallState();
+        }
+
+        this.buildLogSection();
         this.bindCliEvents();
-        await this.refreshProjectInfo();
-        await this.refreshCliVersion();
-        this.syncButtonStates();
+
+        if (this.isCliAvailable) {
+            await this.refreshProjectInfo();
+            await this.refreshCliVersion();
+            this.syncButtonStates();
+        } else {
+            // Hide the output section until an install starts
+            this.outputSection.style.display = "none";
+        }
     }
 
     /** Remove CLI event listeners to prevent handler accumulation. */
     async onClose(): Promise<void> {
-        this.cli.removeListener(CLI_EVENTS.statusChanged, this.onStatusChanged);
-        this.cli.removeListener(CLI_EVENTS.urlFound, this.onUrlFound);
-        this.cli.removeListener(CLI_EVENTS.log, this.onLog);
-        this.cli.removeListener(CLI_EVENTS.error, this.onError);
-        this.cli.removeListener(CLI_EVENTS.stopped, this.onStopped);
+        this.unbindCliEvents();
     }
 
     // ── Section Builders ──────────────────────────────────────────
@@ -125,6 +142,7 @@ export class RetypePanelView extends ItemView {
         setIcon(logoEl, ICONS.retypeLogo);
         brand.createSpan({ cls: CSS.headerName, text: LABELS.pluginDisplayName });
         this.cliVersionEl = brand.createSpan({ cls: CSS.headerVersion });
+        this.cliVersionEl.style.display = this.isCliAvailable ? "" : "none";
 
         const gearBtn = header.createEl("button", {
             cls: CSS.headerGear,
@@ -147,6 +165,91 @@ export class RetypePanelView extends ItemView {
     private buildProjectInfo(): void {
         const section = this.contentEl.createDiv({ cls: CSS.infoSection });
         this.projectEl = section.createDiv({ cls: CSS.projectBlock });
+    }
+
+    /** Build the ready-state sections: project info, status, actions. */
+    private buildReadyState(): void {
+        this.buildProjectInfo();
+        this.buildStatusCard();
+        this.buildActions();
+    }
+
+    /**
+     * Build the install-state UI: heading, message, install button
+     * (if a package manager is detected), code block with the install
+     * command, and a link to the installation guide.
+     */
+    private buildInstallState(): void {
+        this.installSection = this.contentEl.createDiv({ cls: CSS.installSection });
+
+        // ── Step 1: Plugin installed ──────────────────────────────
+        this.installSection.createDiv({
+            cls: CSS.installStepHeading,
+            text: LABELS.step1Heading,
+        });
+
+        const step1Msg = this.installSection.createDiv({
+            cls: CSS.installStepMessage,
+            text: LABELS.step1Message,
+        });
+
+        // ── Step 2: Add Retype CLI ────────────────────────────────
+        this.installSection.createDiv({
+            cls: CSS.installStepHeading,
+            text: LABELS.step2Heading,
+        });
+
+        const pm = this.plugin.pmDetection;
+
+        // Only show the button, hint, and code block if a package manager was detected
+        if (pm && pm.manager) {
+            this.installBtn = this.installSection.createEl("button", {
+                cls: `${CSS.btn} ${CSS.installBtn}`,
+            });
+            setIcon(this.installBtn.createSpan(), "circle-plus");
+            this.installBtn.createSpan({ text: LABELS.installButton });
+            this.installBtn.addEventListener("click", () => this.onInstallClick());
+
+            // Manual install hint
+            this.installSection.createDiv({
+                cls: CSS.installStepMessage,
+                text: LABELS.manualInstallHint,
+            });
+
+            // Code block with the install command + copy button
+            const codeBlock = this.installSection.createDiv({ cls: CSS.installCode });
+            const command = pm.command;
+            codeBlock.createEl("code", { text: command });
+
+            const copyBtn = codeBlock.createEl("button", {
+                cls: CSS.installCodeCopy,
+                title: LABELS.copyTooltip,
+                attr: { "aria-label": LABELS.copyTooltip },
+            });
+            setIcon(copyBtn, "copy");
+            copyBtn.addEventListener("click", () => {
+                navigator.clipboard.writeText(command);
+                copyBtn.title = LABELS.copiedTooltip;
+                copyBtn.setAttribute("aria-label", LABELS.copiedTooltip);
+                setTimeout(() => {
+                    copyBtn.title = LABELS.copyTooltip;
+                    copyBtn.setAttribute("aria-label", LABELS.copyTooltip);
+                }, 2000);
+            });
+        } else {
+            this.installBtn = null;
+        }
+
+        // Link to installation guide
+        const guideLink = this.installSection.createEl("a", {
+            cls: CSS.installGuide,
+            text: LABELS.installGuideLabel,
+            href: LABELS.installGuideUrl,
+        });
+        guideLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            window.open(LABELS.installGuideUrl);
+        });
     }
 
     /** Server status card with dot, label, and URL row. */
@@ -202,9 +305,9 @@ export class RetypePanelView extends ItemView {
 
     /** Output log section with header + scrollable body. */
     private buildLogSection(): void {
-        const section = this.contentEl.createDiv({ cls: CSS.output });
+        this.outputSection = this.contentEl.createDiv({ cls: CSS.output });
 
-        const header = section.createDiv({ cls: CSS.outputHeader });
+        const header = this.outputSection.createDiv({ cls: CSS.outputHeader });
         header.createSpan({ cls: CSS.outputTitle, text: LABELS.outputTitle });
 
         const clearBtn = header.createEl("button", {
@@ -215,14 +318,35 @@ export class RetypePanelView extends ItemView {
         setIcon(clearBtn.createSpan(), ICONS.clearLog);
         clearBtn.addEventListener("click", () => this.clearLog());
 
-        const body = section.createDiv({ cls: CSS.outputBody });
+        const body = this.outputSection.createDiv({ cls: CSS.outputBody });
         this.logEl = body.createDiv({ cls: CSS.log });
-        this.appendLog(LABELS.initialLogLine);
+
+        // Replay existing lines if we have them (preserves content across
+        // re-renders). Only show the initial welcome line when in ready state
+        // with no existing log content.
+        const savedLines = this.logLines.length > 0
+            ? [...this.logLines]
+            : this.isCliAvailable ? [LABELS.initialLogLine] : [];
+        this.logLines = [];
+        for (const line of savedLines) {
+            this.appendLog(line);
+        }
     }
 
     // ── CLI Event Binding ─────────────────────────────────────────
 
+    /** Remove any previously bound CLI event listeners. */
+    private unbindCliEvents(): void {
+        this.cli.removeListener(CLI_EVENTS.statusChanged, this.onStatusChanged);
+        this.cli.removeListener(CLI_EVENTS.urlFound, this.onUrlFound);
+        this.cli.removeListener(CLI_EVENTS.log, this.onLog);
+        this.cli.removeListener(CLI_EVENTS.error, this.onError);
+        this.cli.removeListener(CLI_EVENTS.stopped, this.onStopped);
+    }
+
     private bindCliEvents(): void {
+        // Ensure we never stack duplicate listeners across re-renders
+        this.unbindCliEvents();
         this.onStatusChanged = (status: ServerStatus) => {
             this.updateStatusUI(status);
             this.syncButtonStates();
@@ -230,9 +354,6 @@ export class RetypePanelView extends ItemView {
 
         this.onUrlFound = (url: string) => {
             this.showServerUrl(url);
-            if (this.plugin.settings.autoOpenBrowser) {
-                window.open(url);
-            }
         };
 
         this.onLog = (line: string) => {
@@ -271,9 +392,10 @@ export class RetypePanelView extends ItemView {
 
         const key = this.plugin.retypeProKey || undefined;
 
-        // Always suppress the CLI's own browser launch; the urlFound
-        // handler opens the browser once when autoOpenBrowser is enabled.
-        await this.cli.start(root, key, true);
+        // Pass --no-open only when the user has disabled auto-open.
+        // When enabled, Retype opens the browser itself.
+        const noOpen = !this.plugin.settings.autoOpenBrowser;
+        await this.cli.start(root, key, noOpen);
     }
 
     private onStopClick(): void {
@@ -304,6 +426,94 @@ export class RetypePanelView extends ItemView {
             );
         } finally {
             this.buildBtn.disabled = false;
+        }
+    }
+
+    // ── Install Click Handler ─────────────────────────────────────
+
+    /**
+     * Handle the "Install Retype" button click.
+     * Disables the button, shows the console, streams install output,
+     * and transitions to ready state on success.
+     */
+    private async onInstallClick(): Promise<void> {
+        const pm = this.plugin.pmDetection;
+        if (!pm || !pm.manager || !pm.path || this.isInstalling) {
+            return;
+        }
+
+        this.isInstalling = true;
+
+        // Disable button and change label to "Installing…"
+        if (this.installBtn) {
+            this.installBtn.disabled = true;
+            this.installBtn.textContent = LABELS.installingButton;
+            this.installBtn.addClass(CSS.installBtnDisabled);
+        }
+
+        // Show the console section for install output
+        this.outputSection.style.display = "";
+
+        const result = await this.plugin.installService.install(
+            pm.manager,
+            pm.path,
+            (line: string) => this.appendLog(line)
+        );
+
+        if (result.success) {
+            // Re-read detection from plugin (redetect was called by InstallService)
+            this.plugin.cliDetection = this.plugin.cliDetector.lastResult;
+            if (this.plugin.cliDetection.found && this.plugin.cliDetection.path) {
+                this.plugin.cli.updateCliPath(this.plugin.cliDetection.path);
+            }
+            // Append the "Click Start" prompt after install output
+            this.appendLog("");
+            this.appendLog(LABELS.initialLogLine);
+            new Notice(NOTICES.installSuccess, 4000);
+            this.transitionToReady();
+        } else {
+            // Install failed — show error, keep console visible, re-enable button
+            new Notice(
+                NOTICES.installFailed.replace("{message}", result.error ?? "Unknown error"),
+                8000
+            );
+            if (this.installBtn) {
+                this.installBtn.disabled = false;
+                this.installBtn.textContent = LABELS.installButton;
+                this.installBtn.removeClass(CSS.installBtnDisabled);
+            }
+            this.isInstalling = false;
+        }
+    }
+
+    // ── State Transitions ─────────────────────────────────────────
+
+    /**
+     * Transition from install state to ready state by re-rendering.
+     */
+    private transitionToReady(): void {
+        this.isCliAvailable = true;
+        this.isInstalling = false;
+        // Re-render the full panel in ready state
+        this.onOpen();
+    }
+
+    /**
+     * Called by the plugin after CLI detection completes.
+     * Updates the panel state and re-renders if needed.
+     */
+    async onDetectionComplete(): Promise<void> {
+        const wasAvailable = this.isCliAvailable;
+        this.isCliAvailable = this.plugin.cliDetection.found;
+
+        if (this.isCliAvailable !== wasAvailable) {
+            // State changed — full re-render
+            await this.onOpen();
+        } else if (this.isCliAvailable) {
+            await this.refreshCliVersion();
+        } else {
+            // Still in install state — re-render to pick up pmDetection
+            await this.onOpen();
         }
     }
 
