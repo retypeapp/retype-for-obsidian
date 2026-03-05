@@ -1,0 +1,11 @@
+{
+    "id": "retype",
+    "name": "Retype",
+    "version": "1.0.0",
+    "minAppVersion": "1.4.0",
+    "description": "Control the Retype server from inside Obsidian — start, stop, build, and monitor output from a sidebar panel.",
+    "author": "Retype",
+    "authorUrl": "https://retype.com",
+    "fundingUrl": "https://retype.com/pro/",
+    "isDesktopOnly": true
+}

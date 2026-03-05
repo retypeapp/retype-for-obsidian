@@ -1,0 +1,33 @@
+{
+    "name": "retype-for-obsidian",
+    "version": "1.0.0",
+    "description": "Install and manage Retype directly from your Obsidian vault.",
+    "main": "main.js",
+    "scripts": {
+        "dev": "node esbuild.config.mjs",
+        "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+        "lint": "tsc -noEmit -skipLibCheck"
+    },
+    "keywords": [
+        "obsidian",
+        "plugin",
+        "obsidian-plugin",
+        "retype",
+        "documentation",
+        "generator",
+        "website"
+    ],
+    "author": "Retype",
+    "license": "Apache-2.0",
+    "dependencies": {
+        "retypeapp": "latest"
+    },
+    "devDependencies": {
+        "@types/node": "^20.11.0",
+        "builtin-modules": "^3.3.0",
+        "esbuild": "^0.20.0",
+        "obsidian": "latest",
+        "tslib": "^2.6.0",
+        "typescript": "^5.3.0"
+    }
+}

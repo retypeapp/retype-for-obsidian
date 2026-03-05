@@ -1,0 +1,437 @@
+/* ============================================================
+   Retype — Styles
+   ============================================================
+   Sidebar panel, header, status card, action buttons, output
+   log, and status bar.
+
+   ALL colors, spacing, and sizing use CSS custom properties
+   or relative `em` units. NO hardcoded hex/rgb/hsl or px/rem
+   values except where noted for icon sizing.
+   ============================================================ */
+
+/* ── Semantic Variables ──────────────────────────────────────── */
+
+.theme-light,
+.theme-dark {
+    --retype-status-stopped:  var(--text-faint);
+    --retype-status-starting: var(--text-warning);
+    --retype-status-running:  var(--text-success);
+    --retype-status-error:    var(--text-error);
+    --retype-status-success:  var(--text-success);
+    --retype-status-warning:  var(--text-warning);
+    --retype-accent:          var(--interactive-accent);
+}
+
+/* ── Panel Root ──────────────────────────────────────────────── */
+
+.retype-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* ── Brand Header Bar ────────────────────────────────────────── */
+
+.retype-ph {
+    display: flex;
+    align-items: center;
+    padding: 0 0.85em;
+    height: 2.625em;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.retype-ph-brand {
+    display: flex;
+    align-items: baseline;
+    gap: 0.44em;
+    flex: 1;
+}
+
+.retype-ph-logo {
+    display: flex;
+    align-items: center;
+    align-self: center;
+    color: var(--text-normal);
+}
+
+/* Icon sizing — precise pixel values required for SVG alignment */
+.retype-ph-logo svg {
+    width: 15px;
+    height: 15px;
+}
+
+.retype-ph-name {
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--text-normal);
+}
+
+.retype-ph-version {
+    font-size: 0.72em;
+    font-weight: 500;
+    color: var(--retype-accent);
+    background: color-mix(in srgb, var(--retype-accent) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--retype-accent) 28%, transparent);
+    border-radius: var(--radius-m);
+    padding: 0.125em 0.5em;
+    letter-spacing: 0.01em;
+}
+
+.retype-ph-gear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.375em 0.75em;
+    border-radius: var(--radius-s);
+    border: none;
+    background: var(--interactive-normal);
+    color: var(--text-normal);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.15s, color 0.15s;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.retype-ph-gear:hover {
+    background: var(--interactive-hover);
+    color: var(--text-normal);
+}
+
+.retype-ph-gear > span {
+    display: inline-flex;
+    align-items: center;
+}
+
+.retype-ph-gear svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+
+/* ── Info Section ────────────────────────────────────────────── */
+
+.retype-info-section {
+    padding: 0.875em;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.625em;
+}
+
+.retype-project-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125em;
+}
+
+.retype-project-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75em;
+}
+
+.retype-project-name {
+    font-size: 1.15em;
+    font-weight: 600;
+    color: var(--text-normal);
+    line-height: 1.3;
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+.retype-project-name.retype-project-none {
+    color: var(--text-faint);
+    font-weight: 400;
+    font-style: italic;
+}
+
+.retype-project-path {
+    color: var(--text-faint);
+    line-height: 1.4;
+    font-size: 1em;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.retype-project-path.retype-project-path-link {
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.retype-project-path.retype-project-path-link:hover {
+    color: var(--retype-accent);
+    text-decoration: underline;
+}
+
+/* ── Status Section ──────────────────────────────────────────── */
+
+.retype-status-section {
+    padding: 0 0.875em 0.875em 0.875em;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.retype-status-card {
+    border-radius: var(--radius-s);
+    padding: 0.625em 0.75em;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-secondary);
+    transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.retype-status-card.running {
+    background: color-mix(in srgb, var(--retype-status-running) 7%, var(--background-primary));
+    border-color: color-mix(in srgb, var(--retype-status-running) 28%, transparent);
+}
+
+.retype-status-card.starting {
+    background: color-mix(in srgb, var(--retype-status-starting) 7%, var(--background-primary));
+    border-color: color-mix(in srgb, var(--retype-status-starting) 28%, transparent);
+}
+
+.retype-status-card.error {
+    background: color-mix(in srgb, var(--retype-status-error) 7%, var(--background-primary));
+    border-color: color-mix(in srgb, var(--retype-status-error) 28%, transparent);
+}
+
+/* Status row: dot + label */
+
+.retype-sc-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}
+
+.retype-sc-dot {
+    width: 0.44em;
+    height: 0.44em;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--retype-status-stopped);
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.retype-sc-dot.running {
+    background: var(--retype-status-running);
+    box-shadow: 0 0 0 0.19em color-mix(in srgb, var(--retype-status-running) 22%, transparent);
+}
+
+.retype-sc-dot.starting {
+    background: var(--retype-status-starting);
+    animation: retype-pulse 1.1s ease-in-out infinite;
+}
+
+.retype-sc-dot.error {
+    background: var(--retype-status-error);
+}
+
+@keyframes retype-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+}
+
+.retype-sc-text {
+    font-weight: 500;
+    color: var(--text-muted);
+    flex: 1;
+}
+
+.retype-status-card.running  .retype-sc-text { color: var(--retype-status-running); }
+.retype-status-card.starting .retype-sc-text { color: var(--retype-status-starting); }
+.retype-status-card.error    .retype-sc-text { color: var(--retype-status-error); }
+
+/* URL — inline within status row, right-aligned */
+
+.retype-sc-url-row {
+    margin-left: auto;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.retype-sc-url-text {
+    font-size: 0.85em;
+    color: var(--retype-accent);
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.retype-sc-url-text:hover {
+    text-decoration: underline;
+}
+
+/* ── Action Buttons ──────────────────────────────────────────── */
+
+.retype-actions {
+    padding: 1.5em 0.875em;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.44em;
+}
+
+.retype-actions-primary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.44em;
+}
+
+/* Shared button base */
+
+.retype-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375em;
+    padding: 0.375em 0.75em;
+    border-radius: var(--radius-s);
+    font-weight: 500;
+    line-height: 1.2;
+    cursor: pointer;
+    border: none;
+    background: var(--interactive-normal);
+    color: var(--text-normal);
+    transition: background-color 0.15s, opacity 0.15s;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.retype-btn > span {
+    display: inline-flex;
+    align-items: center;
+}
+
+.retype-btn svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+
+.retype-btn:hover:not(:disabled) {
+    background: var(--interactive-hover);
+    color: var(--text-normal);
+}
+
+.retype-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Stop button — danger styling */
+
+.retype-btn-stop {
+    background: var(--retype-status-error);
+    color: var(--text-on-accent);
+    border-color: transparent;
+}
+
+.retype-btn-stop:hover {
+    opacity: 0.88;
+    background: var(--retype-status-error);
+    color: var(--text-on-accent);
+}
+
+/* ── Output Log ──────────────────────────────────────────────── */
+
+.retype-output {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    border-radius: var(--radius-s);
+    border: 1px solid var(--background-modifier-border);
+    background: var(--code-background);
+    margin: 0.875em;
+}
+
+.retype-output-header {
+    display: flex;
+    align-items: center;
+    gap: 0.375em;
+    padding: 0.5625em 0.875em;
+    background: var(--background-secondary);
+    border-bottom: 1px solid var(--background-modifier-border);
+    flex-shrink: 0;
+    user-select: none;
+    border-radius: var(--radius-s) var(--radius-s) 0 0;
+}
+
+.retype-output-title {
+    flex: 1;
+    font-size: 0.85em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-faint);
+}
+
+.retype-output-header .retype-output-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.375em 0.75em;
+    border-radius: var(--radius-s);
+    border: none;
+    background: var(--interactive-normal);
+    color: var(--text-faint);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.15s, color 0.15s;
+    line-height: 1.2;
+}
+
+.retype-output-header .retype-output-clear:hover {
+    background: var(--interactive-hover);
+    color: var(--text-muted);
+}
+
+.retype-output-header .retype-output-clear > span {
+    display: inline-flex;
+    align-items: center;
+}
+
+.retype-output-header .retype-output-clear svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+
+.retype-output-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.retype-log {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    font-family: var(--font-monospace);
+    font-size: 0.85em;
+    line-height: 1.55;
+    padding: 0.625em 0.875em;
+    color: var(--code-normal);
+    background: var(--code-background);
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.retype-log-line-error   { color: var(--retype-status-error); }
+.retype-log-line-warning  { color: var(--retype-status-warning); }
+.retype-log-line-url      { color: var(--text-normal); }
+.retype-log-line-success  { color: var(--retype-status-success); }
+
+/* ── Status Bar ──────────────────────────────────────────────── */
+
+.retype-status-bar {
+    cursor: pointer;
+}

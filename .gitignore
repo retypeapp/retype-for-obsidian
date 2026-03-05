@@ -1,0 +1,26 @@
+# Build output
+main.js
+
+# Dependencies
+node_modules/
+
+# IDE / OS
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+*.code-workspace
+
+# Project management
+openspec
+.claude
+
+# npm
+npm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+data.json
