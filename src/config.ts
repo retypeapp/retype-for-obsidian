@@ -63,12 +63,14 @@ export const SECRET_KEY_RETYPE = "retype-key";
 export const SETTING_KEYS = {
     autoOpenBrowser: "autoOpenBrowser",
     showStatusBar: "showStatusBar",
+    debounce: "debounce",
 } as const;
 
 /** Default setting values. */
 export const DEFAULT_SETTING_VALUES = {
     autoOpenBrowser: true,
     showStatusBar: true,
+    debounce: 400,
 } as const;
 
 // ── Labels & Text ─────────────────────────────────────────────────────────
@@ -81,6 +83,8 @@ export const LABELS = {
     /** Retype Key setting. */
     settingKeyName: "Retype Key",
     settingKeyDesc: "Your Retype Pro or Community key",
+    settingKeyProUrl: "https://retype.com/pro/",
+    settingKeyCommunityUrl: "https://retype.com/community/",
     settingKeyPlaceholder: "Paste key here",
     /** Auto-open browser setting. */
     settingAutoOpenName: "Open browser automatically",
@@ -88,6 +92,9 @@ export const LABELS = {
     /** Show status bar setting. */
     settingStatusBarName: "Show status bar item",
     settingStatusBarDesc: "Show Retype server status in the Obsidian status bar",
+    /** Debounce setting. */
+    settingDebounceName: "Debounce",
+    settingDebounceDesc: "Delay in milliseconds before Retype rebuilds after a file change",
     /** Ribbon button tooltip. */
     ribbonTooltip: "Retype",
     /** Gear button tooltip. */

@@ -138,7 +138,8 @@ export class CliService extends EventEmitter {
     async start(
         projectRoot: string,
         key?: string,
-        noOpen = true
+        noOpen = true,
+        debounce?: number
     ): Promise<void> {
         if (this.isRunning) {
             this.emit(CLI_EVENTS.error, CLI_LOG.alreadyRunning);
@@ -165,6 +166,9 @@ export class CliService extends EventEmitter {
         }
         if (key) {
             args.push("--key", key);
+        }
+        if (debounce !== undefined) {
+            args.push("--debounce", String(debounce));
         }
 
         // Redact the key in log output

@@ -21,12 +21,15 @@ export interface RetypePluginSettings {
     autoOpenBrowser: boolean;
     /** Show the Retype status bar item. */
     showStatusBar: boolean;
+    /** Delay in milliseconds before Retype rebuilds after a file change. */
+    debounce: number;
 }
 
 /** Default values applied on first load. */
 export const DEFAULT_SETTINGS: RetypePluginSettings = {
     autoOpenBrowser: DEFAULT_SETTING_VALUES.autoOpenBrowser,
     showStatusBar: DEFAULT_SETTING_VALUES.showStatusBar,
+    debounce: DEFAULT_SETTING_VALUES.debounce,
 };
 
 // ── Settings Tab ──────────────────────────────────────────────────────────
@@ -49,9 +52,18 @@ export class RetypeSettingTab extends PluginSettingTab {
         containerEl.empty();
 
         // ── Retype Key (password input, stored in SecretStorage) ─
+        const keyDesc = document.createDocumentFragment();
+        keyDesc.append("Your Retype ");
+        const proLink = keyDesc.createEl("a", { text: "Pro", href: LABELS.settingKeyProUrl });
+        proLink.setAttr("target", "_blank");
+        keyDesc.append(" or ");
+        const communityLink = keyDesc.createEl("a", { text: "Community", href: LABELS.settingKeyCommunityUrl });
+        communityLink.setAttr("target", "_blank");
+        keyDesc.append(" key");
+
         new Setting(containerEl)
             .setName(LABELS.settingKeyName)
-            .setDesc(LABELS.settingKeyDesc)
+            .setDesc(keyDesc)
             .addText((text) => {
                 text.setPlaceholder(LABELS.settingKeyPlaceholder)
                     .setValue(this.plugin.retypeProKey)
@@ -64,6 +76,23 @@ export class RetypeSettingTab extends PluginSettingTab {
                         );
                     });
                 text.inputEl.type = "password";
+            });
+
+        // ── Debounce ────────────────────────────────────────────
+        new Setting(containerEl)
+            .setName(LABELS.settingDebounceName)
+            .setDesc(LABELS.settingDebounceDesc)
+            .addText((text) => {
+                text.inputEl.type = "number";
+                text.inputEl.min = "0";
+                text.setValue(String(this.plugin.settings.debounce));
+                text.onChange(async (value) => {
+                    const parsed = parseInt(value, 10);
+                    if (!isNaN(parsed) && parsed >= 0) {
+                        this.plugin.settings.debounce = parsed;
+                        await this.plugin.saveSettings();
+                    }
+                });
             });
 
         // ── Open browser automatically ──────────────────────────

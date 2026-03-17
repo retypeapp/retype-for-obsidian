@@ -395,7 +395,8 @@ export class RetypePanelView extends ItemView {
         // Pass --no-open only when the user has disabled auto-open.
         // When enabled, Retype opens the browser itself.
         const noOpen = !this.plugin.settings.autoOpenBrowser;
-        await this.cli.start(root, key, noOpen);
+        const debounce = this.plugin.settings.debounce;
+        await this.cli.start(root, key, noOpen, debounce);
     }
 
     private onStopClick(): void {
