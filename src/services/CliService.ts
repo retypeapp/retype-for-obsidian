@@ -499,13 +499,15 @@ export class CliService extends EventEmitter {
                     shell: process.platform === "win32",
                     env,
                 },
-                async (err) => {
-                    try {
-                        await rm(tempHome, { recursive: true, force: true });
-                    } catch {
-                        // no-op
-                    }
-                    resolve(!err);
+                (err) => {
+                    void rm(tempHome, { recursive: true, force: true }).then(
+                        () => {
+                            resolve(!err);
+                        },
+                        () => {
+                            resolve(!err);
+                        }
+                    );
                 }
             );
         });

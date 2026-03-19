@@ -154,14 +154,8 @@ export class CliDetector extends EventEmitter {
         this.stopPolling();
         this._polling = true;
 
-        this._pollTimer = setInterval(async () => {
-            const result = await this.detect();
-            if (result.found) {
-                // Also detect package manager so pmDetection is populated
-                await this.detectPackageManager();
-                this.stopPolling();
-                this.emit(DETECTOR_EVENTS.stateChanged, result);
-            }
+        this._pollTimer = setInterval(() => {
+            void this.pollForCli();
         }, intervalMs);
     }
 
@@ -174,6 +168,18 @@ export class CliDetector extends EventEmitter {
             this._pollTimer = null;
         }
         this._polling = false;
+    }
+
+    private async pollForCli(): Promise<void> {
+        const result = await this.detect();
+        if (!result.found) {
+            return;
+        }
+
+        // Also detect package manager so pmDetection is populated.
+        await this.detectPackageManager();
+        this.stopPolling();
+        this.emit(DETECTOR_EVENTS.stateChanged, result);
     }
 
     // ── Private Helpers ───────────────────────────────────────────
