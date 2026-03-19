@@ -86,11 +86,11 @@ export class RetypeSettingTab extends PluginSettingTab {
                 text.inputEl.type = "number";
                 text.inputEl.min = "0";
                 text.setValue(String(this.plugin.settings.debounce));
-                text.onChange(async (value) => {
+                text.onChange((value) => {
                     const parsed = parseInt(value, 10);
                     if (!isNaN(parsed) && parsed >= 0) {
                         this.plugin.settings.debounce = parsed;
-                        await this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     }
                 });
             });
@@ -102,9 +102,9 @@ export class RetypeSettingTab extends PluginSettingTab {
             .addToggle((toggle) =>
                 toggle
                     .setValue(this.plugin.settings.autoOpenBrowser)
-                    .onChange(async (value) => {
+                    .onChange((value) => {
                         this.plugin.settings.autoOpenBrowser = value;
-                        await this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
 
@@ -115,9 +115,9 @@ export class RetypeSettingTab extends PluginSettingTab {
             .addToggle((toggle) =>
                 toggle
                     .setValue(this.plugin.settings.showStatusBar)
-                    .onChange(async (value) => {
+                    .onChange((value) => {
                         this.plugin.settings.showStatusBar = value;
-                        await this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                         this.plugin.refreshStatusBar();
                     })
             );

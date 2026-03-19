@@ -93,7 +93,7 @@ export const LABELS = {
     settingStatusBarName: "Show status bar item",
     settingStatusBarDesc: "Show Retype server status in the Obsidian status bar",
     /** Debounce setting. */
-    settingDebounceName: "Debounce",
+    settingDebounceName: "Debounce delay",
     settingDebounceDesc: "Delay in milliseconds before Retype rebuilds after a file change",
     /** Ribbon button tooltip. */
     ribbonTooltip: "Retype",
@@ -104,7 +104,7 @@ export const LABELS = {
     /** Output panel heading. */
     outputTitle: "Output",
     /** Initial log line shown when the panel opens. */
-    initialLogLine: "Click Start to launch the Retype server",
+    initialLogLine: "Click start to launch the Retype server",
     /** Project info — no project found. */
     noProjectName: "No project",
     noProjectPath: "No retype.yml found in vault",

@@ -179,11 +179,12 @@ export default class RetypePlugin extends Plugin {
         // Legacy migration: retypeProKey stored in data.json
         const raw = (await this.loadData()) as Record<string, unknown> | null;
         if (raw && typeof raw[LEGACY_KEY_FIELD] === "string" && raw[LEGACY_KEY_FIELD]) {
+            const legacyKey = raw[LEGACY_KEY_FIELD];
             if (!this.retypeProKey) {
-                this.retypeProKey = raw[LEGACY_KEY_FIELD] as string;
+                this.retypeProKey = legacyKey;
                 await this.app.secretStorage.setSecret(
                     SECRET_KEY_RETYPE,
-                    raw[LEGACY_KEY_FIELD] as string
+                    legacyKey
                 );
             }
             delete raw[LEGACY_KEY_FIELD];

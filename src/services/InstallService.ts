@@ -78,7 +78,14 @@ export class InstallService {
             });
 
             child.on("close", (code) => {
-                void this.handleInstallClose(code, onLog).then(resolve);
+                this.handleInstallClose(code, onLog).then(resolve, (err: unknown) => {
+                    const errorMsg = INSTALL_SERVICE.spawnError.replace(
+                        "{message}",
+                        err instanceof Error ? err.message : String(err)
+                    );
+                    onLog?.(errorMsg);
+                    resolve({ success: false, error: errorMsg });
+                });
             });
         });
     }
