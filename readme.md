@@ -2,6 +2,8 @@
 
 Install and manage [Retype](https://retype.com) directly from your Obsidian vault.
 
+Desktop-only Obsidian plugin for macOS, Windows, and Linux.
+
 ## Features
 
 - **Sidebar panel** — Start, Stop, and Build buttons for the Retype CLI
@@ -13,7 +15,7 @@ Install and manage [Retype](https://retype.com) directly from your Obsidian vaul
 - **Install gate** — When the Retype CLI is not found, the panel shows a two-step setup guide with install options instead of Start/Build/Console controls
 - **User-triggered install** — Install the Retype CLI with one click using npm, yarn, or dotnet (auto-detected in that order)
 - **Auto-detection polling** — When the CLI is not found, the plugin polls every few seconds and automatically transitions to the ready state if the CLI is installed externally
-- **Three settings** — Retype Key (stored securely), Open browser automatically, Show status bar item
+- **Four settings** — Retype Key (stored securely), Debounce value, Open browser automatically, Show status bar item
 
 ## Installation
 
@@ -24,7 +26,7 @@ Install and manage [Retype](https://retype.com) directly from your Obsidian vaul
 3. Copy `main.js`, `styles.css`, and `manifest.json` into your vault at:
 
    ```
-   <vault>/.obsidian/plugins/retype-for-obsidian/
+   <vault>/.obsidian/plugins/retype/
    ```
 
 4. Open **Settings → Community plugins**, enable **Retype**.
@@ -37,6 +39,7 @@ Install and manage [Retype](https://retype.com) directly from your Obsidian vaul
 4. Click **Stop** to shut down the server, or **Build** to run a one-off build (only available when the server is stopped).
 5. Open **Settings → Retype** to configure:
    - **Retype Key** — your Retype Pro or Community license key (stored in Obsidian's secure secret storage)
+   - **Debounce** — delay in milliseconds before Retype rebuilds after a file change
    - **Open browser automatically** — open the default browser when the server starts
    - **Show status bar item** — toggle the Retype status indicator in the Obsidian status bar
 
@@ -92,8 +95,8 @@ See the [Retype installation guide](https://retype.com/guides/installation/) for
 | Command | Description |
 |---------|-------------|
 | Retype: Open Retype panel | Open or reveal the Retype sidebar |
-| Retype: Start Retype server | Start the Retype service open website |
-| Retype: Stop Retype server | Stop the Retype service |
+| Retype: Start Retype server | Start the Retype development server |
+| Retype: Stop Retype server | Stop the Retype development server |
 
 ## License
 
