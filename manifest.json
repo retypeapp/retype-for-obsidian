@@ -3,9 +3,8 @@
     "name": "Retype",
     "version": "1.1.0",
     "minAppVersion": "1.4.0",
-    "description": "Retype for Obsidian — Build and preview your documentation directly from Obsidian.",
+    "description": "Build and preview your documentation with Retype.",
     "author": "Retype",
     "authorUrl": "https://retype.com",
-    "fundingUrl": "https://retype.com/pro/",
     "isDesktopOnly": true
 }
