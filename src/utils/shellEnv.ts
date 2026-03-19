@@ -63,7 +63,7 @@ export function getShellPath(): Promise<string> {
                 } else {
                     _enrichedPath = stdout.trim();
                 }
-                resolve(_enrichedPath!);
+                resolve(_enrichedPath ?? buildFallbackPath());
             }
         );
     });

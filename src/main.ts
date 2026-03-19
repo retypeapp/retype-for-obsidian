@@ -54,7 +54,6 @@ export default class RetypePlugin extends Plugin {
     retypeProKey = "";
 
     private statusBarItem: HTMLElement | null = null;
-    private sidebarView: RetypePanelView | null = null;
 
     // ── Plugin Lifecycle ──────────────────────────────────────────
 
@@ -77,20 +76,19 @@ export default class RetypePlugin extends Plugin {
             this.pmDetection = this.cliDetector.lastPmResult;
             if (result.found && result.path) {
                 this.cli.updateCliPath(result.path);
-                console.log(DETECTOR.usingCli, result.path);
+                console.debug(DETECTOR.usingCli, result.path);
             }
-            void this.sidebarView?.onDetectionComplete();
+            void this.getSidebarView()?.onDetectionComplete();
         });
 
         // ── Sidebar view ──────────────────────────────────────────
         this.registerView(VIEW_TYPE_RETYPE_SIDEBAR, (leaf) => {
-            this.sidebarView = new RetypePanelView(
+            return new RetypePanelView(
                 leaf,
                 this,
                 this.cli,
                 this.detector
             );
-            return this.sidebarView;
         });
 
         // ── Ribbon icon ───────────────────────────────────────────
@@ -132,7 +130,7 @@ export default class RetypePlugin extends Plugin {
         // ── Active leaf change ────────────────────────────────────
         this.registerEvent(
             this.app.workspace.on("active-leaf-change", () => {
-                void this.sidebarView?.onActiveFileChange();
+                void this.getSidebarView()?.onActiveFileChange();
             })
         );
 
@@ -143,10 +141,10 @@ export default class RetypePlugin extends Plugin {
         void this.detectCli();
     }
 
-    async onunload(): Promise<void> {
+    onunload(): void {
         this.cliDetector?.stopPolling();
         if (this.cli?.isRunning) {
-            await this.cli.stopAsync(1500);
+            void this.cli.stopAsync(1500);
         }
     }
 
@@ -182,7 +180,7 @@ export default class RetypePlugin extends Plugin {
             const legacyKey = raw[LEGACY_KEY_FIELD];
             if (!this.retypeProKey) {
                 this.retypeProKey = legacyKey;
-                await this.app.secretStorage.setSecret(
+                this.app.secretStorage.setSecret(
                     SECRET_KEY_RETYPE,
                     legacyKey
                 );
@@ -194,7 +192,12 @@ export default class RetypePlugin extends Plugin {
 
     private async startServerFromCommand(): Promise<void> {
         await this.activateSidebar();
-        await this.sidebarView?.onStartClick();
+        await this.getSidebarView()?.onStartClick();
+    }
+
+    private getSidebarView(): RetypePanelView | null {
+        const [leaf] = this.app.workspace.getLeavesOfType(VIEW_TYPE_RETYPE_SIDEBAR);
+        return leaf?.view instanceof RetypePanelView ? leaf.view : null;
     }
 
     // ── Sidebar Management ────────────────────────────────────────
@@ -205,7 +208,7 @@ export default class RetypePlugin extends Plugin {
 
         const existing = workspace.getLeavesOfType(VIEW_TYPE_RETYPE_SIDEBAR);
         if (existing.length > 0) {
-            workspace.revealLeaf(existing[0]);
+            await workspace.revealLeaf(existing[0]);
             return;
         }
 
@@ -215,7 +218,7 @@ export default class RetypePlugin extends Plugin {
                 type: VIEW_TYPE_RETYPE_SIDEBAR,
                 active: true,
             });
-            workspace.revealLeaf(leaf);
+            await workspace.revealLeaf(leaf);
         }
     }
 
@@ -329,14 +332,14 @@ export default class RetypePlugin extends Plugin {
 
         if (this.cliDetection.found && this.cliDetection.path) {
             this.cli.updateCliPath(this.cliDetection.path);
-            console.log(DETECTOR.usingCli, this.cliDetection.path);
+            console.debug(DETECTOR.usingCli, this.cliDetection.path);
         } else {
-            console.log(DETECTOR.cliNotDetected);
+            console.debug(DETECTOR.cliNotDetected);
             // Start polling so we detect external installs automatically
             this.cliDetector.startPolling();
         }
 
         // Notify the sidebar view to render the correct state
-        void this.sidebarView?.onDetectionComplete();
+        void this.getSidebarView()?.onDetectionComplete();
     }
 }

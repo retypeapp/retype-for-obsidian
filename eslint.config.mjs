@@ -16,6 +16,7 @@ export default defineConfig([
             },
         },
         rules: {
+            "no-undef": "off",
             "obsidianmd/ui/sentence-case": [
                 "warn",
                 {

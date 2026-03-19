@@ -193,7 +193,7 @@ export class RetypePanelView extends ItemView {
             text: LABELS.step1Heading,
         });
 
-        const step1Msg = this.installSection.createDiv({
+        this.installSection.createDiv({
             cls: CSS.installStepMessage,
             text: LABELS.step1Message,
         });

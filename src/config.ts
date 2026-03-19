@@ -252,7 +252,7 @@ export const CSS = {
 export const URL_PATTERN = /https?:\/\/[^\s]+/;
 
 /** Regex to extract a semver version string from CLI output. */
-export const VERSION_PATTERN = /(\d+\.\d+[\.\d]*)/;
+export const VERSION_PATTERN = /(\d+\.\d+[.\d]*)/;
 
 /** Log line classification patterns (case-insensitive). */
 export const LOG_PATTERNS = {
