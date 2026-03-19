@@ -70,7 +70,7 @@ export class RetypeSettingTab extends PluginSettingTab {
                     .onChange((value) => {
                         const trimmed = value.trim();
                         this.plugin.retypeProKey = trimmed;
-                        this.app.secretStorage.setSecret(
+                        void this.app.secretStorage.setSecret(
                             SECRET_KEY_RETYPE,
                             trimmed
                         );

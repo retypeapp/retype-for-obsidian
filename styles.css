@@ -22,6 +22,10 @@
     --retype-accent:          var(--interactive-accent);
 }
 
+.retype-is-hidden {
+    display: none !important;
+}
+
 /* ── Panel Root ──────────────────────────────────────────────── */
 
 .retype-panel {

@@ -122,13 +122,18 @@ export class RetypePanelView extends ItemView {
             this.syncButtonStates();
         } else {
             // Hide the output section until an install starts
-            this.outputSection.style.display = "none";
+            this.setHidden(this.outputSection, true);
         }
     }
 
     /** Remove CLI event listeners to prevent handler accumulation. */
-    async onClose(): Promise<void> {
+    onClose(): Promise<void> {
         this.unbindCliEvents();
+        return Promise.resolve();
+    }
+
+    private setHidden(element: HTMLElement | null, hidden: boolean): void {
+        element?.classList.toggle(CSS.hidden, hidden);
     }
 
     // ── Section Builders ──────────────────────────────────────────
@@ -142,7 +147,7 @@ export class RetypePanelView extends ItemView {
         setIcon(logoEl, ICONS.retypeLogo);
         brand.createSpan({ cls: CSS.headerName, text: LABELS.pluginDisplayName });
         this.cliVersionEl = brand.createSpan({ cls: CSS.headerVersion });
-        this.cliVersionEl.style.display = this.isCliAvailable ? "" : "none";
+        this.setHidden(this.cliVersionEl, !this.isCliAvailable);
 
         const gearBtn = header.createEl("button", {
             cls: CSS.headerGear,
@@ -208,7 +213,9 @@ export class RetypePanelView extends ItemView {
             });
             setIcon(this.installBtn.createSpan(), "circle-plus");
             this.installBtn.createSpan({ text: LABELS.installButton });
-            this.installBtn.addEventListener("click", () => this.onInstallClick());
+            this.installBtn.addEventListener("click", () => {
+                void this.onInstallClick();
+            });
 
             // Manual install hint
             this.installSection.createDiv({
@@ -228,7 +235,7 @@ export class RetypePanelView extends ItemView {
             });
             setIcon(copyBtn, "copy");
             copyBtn.addEventListener("click", () => {
-                navigator.clipboard.writeText(command);
+                void navigator.clipboard.writeText(command);
                 copyBtn.title = LABELS.copiedTooltip;
                 copyBtn.setAttribute("aria-label", LABELS.copiedTooltip);
                 setTimeout(() => {
@@ -269,7 +276,7 @@ export class RetypePanelView extends ItemView {
 
         // URL — inline, right-aligned within the status row.
         this.serverUrlEl = statusRow.createSpan({ cls: CSS.statusUrlRow });
-        this.serverUrlEl.style.display = "none";
+        this.setHidden(this.serverUrlEl, true);
     }
 
     /** Start / Stop / Build action buttons. */
@@ -283,7 +290,9 @@ export class RetypePanelView extends ItemView {
         });
         setIcon(this.startBtn.createSpan(), ICONS.play);
         this.startBtn.createSpan({ text: LABELS.startButton });
-        this.startBtn.addEventListener("click", () => this.onStartClick());
+        this.startBtn.addEventListener("click", () => {
+            void this.onStartClick();
+        });
 
         // Stop button (hidden initially)
         this.stopBtn = primary.createEl("button", {
@@ -292,7 +301,7 @@ export class RetypePanelView extends ItemView {
         setIcon(this.stopBtn.createSpan(), ICONS.stop);
         this.stopBtn.createSpan({ text: LABELS.stopButton });
         this.stopBtn.addEventListener("click", () => this.onStopClick());
-        this.stopBtn.style.display = "none";
+        this.setHidden(this.stopBtn, true);
 
         // Build button
         this.buildBtn = primary.createEl("button", {
@@ -300,7 +309,9 @@ export class RetypePanelView extends ItemView {
         });
         setIcon(this.buildBtn.createSpan(), ICONS.build);
         this.buildBtn.createSpan({ text: LABELS.buildButton });
-        this.buildBtn.addEventListener("click", () => this.onBuildClick());
+        this.buildBtn.addEventListener("click", () => {
+            void this.onBuildClick();
+        });
     }
 
     /** Output log section with header + scrollable body. */
@@ -366,7 +377,7 @@ export class RetypePanelView extends ItemView {
         };
 
         this.onStopped = () => {
-            this.serverUrlEl.style.display = "none";
+            this.setHidden(this.serverUrlEl, true);
         };
 
         this.cli.on(CLI_EVENTS.statusChanged, this.onStatusChanged);
@@ -453,7 +464,7 @@ export class RetypePanelView extends ItemView {
         }
 
         // Show the console section for install output
-        this.outputSection.style.display = "";
+        this.setHidden(this.outputSection, false);
 
         const result = await this.plugin.installService.install(
             pm.manager,
@@ -496,7 +507,7 @@ export class RetypePanelView extends ItemView {
         this.isCliAvailable = true;
         this.isInstalling = false;
         // Re-render the full panel in ready state
-        this.onOpen();
+        void this.onOpen();
     }
 
     /**
@@ -526,20 +537,20 @@ export class RetypePanelView extends ItemView {
         this.statusText.textContent = STATUS_TEXT[status];
 
         if (status !== "running") {
-            this.serverUrlEl.style.display = "none";
+            this.setHidden(this.serverUrlEl, true);
         }
     }
 
     private syncButtonStates(): void {
         const running = this.cli.isRunning;
-        this.startBtn.style.display = running ? "none" : "";
-        this.stopBtn.style.display = running ? "" : "none";
+        this.setHidden(this.startBtn, running);
+        this.setHidden(this.stopBtn, !running);
         this.buildBtn.disabled = running;
     }
 
     private showServerUrl(url: string): void {
         this.serverUrlEl.empty();
-        this.serverUrlEl.style.display = "inline";
+        this.setHidden(this.serverUrlEl, false);
 
         const link = this.serverUrlEl.createEl("a", {
             cls: CSS.statusUrlText,
@@ -601,13 +612,13 @@ export class RetypePanelView extends ItemView {
                 text: this.currentProject.configPath,
                 title: LABELS.configPathTooltip,
             });
-            pathEl.addEventListener("click", async () => {
+            pathEl.addEventListener("click", () => {
                 const file = this.app.vault.getAbstractFileByPath(
                     this.currentProject!.configPath
                 );
                 if (file instanceof TFile) {
                     const leaf = this.app.workspace.getLeaf(false);
-                    await leaf.openFile(file);
+                    void leaf.openFile(file);
                 }
             });
         } else {

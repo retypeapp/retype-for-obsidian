@@ -77,26 +77,8 @@ export class InstallService {
                 resolve({ success: false, error: errorMsg });
             });
 
-            child.on("close", async (code) => {
-                if (code === 0) {
-                    onLog?.(INSTALL_SERVICE.complete);
-                    // Re-detect to confirm the CLI is now available
-                    const result = await this.detector.redetect();
-                    if (result.found) {
-                        resolve({ success: true });
-                    } else {
-                        const errorMsg = INSTALL_SERVICE.notFoundAfterInstall;
-                        onLog?.(errorMsg);
-                        resolve({ success: false, error: errorMsg });
-                    }
-                } else {
-                    const errorMsg = INSTALL_SERVICE.exitCode.replace(
-                        "{code}",
-                        String(code ?? "unknown")
-                    );
-                    onLog?.(errorMsg);
-                    resolve({ success: false, error: errorMsg });
-                }
+            child.on("close", (code) => {
+                void this.handleInstallClose(code, onLog).then(resolve);
             });
         });
     }
@@ -115,5 +97,31 @@ export class InstallService {
             case "dotnet":
                 return ["tool", "install", "retypeapp", "--global"];
         }
+    }
+
+    private async handleInstallClose(
+        code: number | null,
+        onLog?: (line: string) => void
+    ): Promise<InstallResult> {
+        if (code !== 0) {
+            const errorMsg = INSTALL_SERVICE.exitCode.replace(
+                "{code}",
+                String(code ?? "unknown")
+            );
+            onLog?.(errorMsg);
+            return { success: false, error: errorMsg };
+        }
+
+        onLog?.(INSTALL_SERVICE.complete);
+
+        // Re-detect to confirm the CLI is now available.
+        const result = await this.detector.redetect();
+        if (result.found) {
+            return { success: true };
+        }
+
+        const errorMsg = INSTALL_SERVICE.notFoundAfterInstall;
+        onLog?.(errorMsg);
+        return { success: false, error: errorMsg };
     }
 }

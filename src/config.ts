@@ -42,15 +42,15 @@ export const VIEW_TYPE_RETYPE_SIDEBAR = "retype-sidebar";
 export const COMMANDS = {
     openSidebar: {
         id: "open-sidebar",
-        name: "Open Retype panel",
+        name: "Open panel",
     },
     startServer: {
         id: "start-server",
-        name: "Start Retype server",
+        name: "Start server",
     },
     stopServer: {
         id: "stop-server",
-        name: "Stop Retype server",
+        name: "Stop server",
     },
 } as const;
 
@@ -81,7 +81,7 @@ export const LABELS = {
     /** Plugin ID used for navigating to the settings tab. */
     pluginId: "retype",
     /** Retype Key setting. */
-    settingKeyName: "Retype Key",
+    settingKeyName: "Retype key",
     settingKeyDesc: "Your Retype Pro or Community key",
     settingKeyProUrl: "https://retype.com/pro/",
     settingKeyCommunityUrl: "https://retype.com/community/",
@@ -98,7 +98,7 @@ export const LABELS = {
     /** Ribbon button tooltip. */
     ribbonTooltip: "Retype",
     /** Gear button tooltip. */
-    gearTooltip: "Retype Settings",
+    gearTooltip: "Retype settings",
     /** Clear log button tooltip. */
     clearLogTooltip: "Clear output",
     /** Output panel heading. */
@@ -115,9 +115,9 @@ export const LABELS = {
     stopButton: "Stop",
     buildButton: "Build",
     /** Install state labels. */
-    step1Heading: "Step 1 \u2014 Plugin installed \u2705",
+    step1Heading: "Step 1 \u2014 plugin installed \u2705",
     step1Message: "Add the Retype CLI to continue, see Step 2",
-    step2Heading: "Step 2 \u2014 Add Retype CLI",
+    step2Heading: "Step 2 \u2014 add Retype CLI",
     installButton: "Retype CLI",
     installingButton: "Installing\u2026",
     manualInstallHint: "Or, manually install by running the following command:",
@@ -243,6 +243,7 @@ export const CSS = {
     installCode: "retype-install-code",
     installCodeCopy: "retype-install-code-copy",
     installGuide: "retype-install-guide",
+    hidden: "retype-is-hidden",
 } as const;
 
 // ── Patterns ──────────────────────────────────────────────────────────────

@@ -33,6 +33,8 @@ export interface CliServiceEvents {
     "stopped": () => void;
 }
 
+type UntypedEventListener = Parameters<EventEmitter["on"]>[1];
+
 // ── CliService ────────────────────────────────────────────────────────────
 
 /**
@@ -553,8 +555,7 @@ export class CliService extends EventEmitter {
     on(event: "log", listener: (line: string) => void): this;
     on(event: "error", listener: (msg: string) => void): this;
     on(event: "stopped", listener: () => void): this;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    on(event: string, listener: (...args: any[]) => void): this {
+    on(event: string, listener: UntypedEventListener): this {
         return super.on(event, listener);
     }
 
@@ -563,8 +564,7 @@ export class CliService extends EventEmitter {
     once(event: "log", listener: (line: string) => void): this;
     once(event: "error", listener: (msg: string) => void): this;
     once(event: "stopped", listener: () => void): this;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    once(event: string, listener: (...args: any[]) => void): this {
+    once(event: string, listener: UntypedEventListener): this {
         return super.once(event, listener);
     }
 }

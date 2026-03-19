@@ -79,7 +79,7 @@ export default class RetypePlugin extends Plugin {
                 this.cli.updateCliPath(result.path);
                 console.log(DETECTOR.usingCli, result.path);
             }
-            this.sidebarView?.onDetectionComplete();
+            void this.sidebarView?.onDetectionComplete();
         });
 
         // ── Sidebar view ──────────────────────────────────────────
@@ -95,7 +95,7 @@ export default class RetypePlugin extends Plugin {
 
         // ── Ribbon icon ───────────────────────────────────────────
         this.addRibbonIcon(ICONS.retypeLogo, LABELS.ribbonTooltip, () => {
-            this.activateSidebar();
+            void this.activateSidebar();
         });
 
         // ── Status bar ────────────────────────────────────────────
@@ -110,15 +110,16 @@ export default class RetypePlugin extends Plugin {
         this.addCommand({
             id: COMMANDS.openSidebar.id,
             name: COMMANDS.openSidebar.name,
-            callback: () => this.activateSidebar(),
+            callback: () => {
+                void this.activateSidebar();
+            },
         });
 
         this.addCommand({
             id: COMMANDS.startServer.id,
             name: COMMANDS.startServer.name,
-            callback: async () => {
-                await this.activateSidebar();
-                this.sidebarView?.onStartClick();
+            callback: () => {
+                void this.startServerFromCommand();
             },
         });
 
@@ -130,8 +131,8 @@ export default class RetypePlugin extends Plugin {
 
         // ── Active leaf change ────────────────────────────────────
         this.registerEvent(
-            this.app.workspace.on("active-leaf-change", async () => {
-                await this.sidebarView?.onActiveFileChange();
+            this.app.workspace.on("active-leaf-change", () => {
+                void this.sidebarView?.onActiveFileChange();
             })
         );
 
@@ -139,7 +140,7 @@ export default class RetypePlugin extends Plugin {
         this.addSettingTab(new RetypeSettingTab(this.app, this));
 
         // ── Detect CLI (non-blocking) ─────────────────────────────
-        this.detectCli();
+        void this.detectCli();
     }
 
     async onunload(): Promise<void> {
@@ -180,11 +181,19 @@ export default class RetypePlugin extends Plugin {
         if (raw && typeof raw[LEGACY_KEY_FIELD] === "string" && raw[LEGACY_KEY_FIELD]) {
             if (!this.retypeProKey) {
                 this.retypeProKey = raw[LEGACY_KEY_FIELD] as string;
-                this.app.secretStorage.setSecret(SECRET_KEY_RETYPE, raw[LEGACY_KEY_FIELD] as string);
+                await this.app.secretStorage.setSecret(
+                    SECRET_KEY_RETYPE,
+                    raw[LEGACY_KEY_FIELD] as string
+                );
             }
             delete raw[LEGACY_KEY_FIELD];
             await this.saveData(raw);
         }
+    }
+
+    private async startServerFromCommand(): Promise<void> {
+        await this.activateSidebar();
+        await this.sidebarView?.onStartClick();
     }
 
     // ── Sidebar Management ────────────────────────────────────────
@@ -230,7 +239,6 @@ export default class RetypePlugin extends Plugin {
     initStatusBar(): void {
         this.statusBarItem = this.addStatusBarItem();
         this.statusBarItem.addClass(CSS.statusBar);
-        this.statusBarItem.style.cursor = "pointer";
         this.statusBarItem.addEventListener("click", () => {
             const url = this.cli?.serverUrl;
             if (this.cli?.status === "running" && url) {
@@ -238,7 +246,7 @@ export default class RetypePlugin extends Plugin {
             } else if (this.isSidebarOpen()) {
                 this.closeSidebar();
             } else {
-                this.activateSidebar();
+                void this.activateSidebar();
             }
         });
         this.updateStatusBar();
@@ -328,6 +336,6 @@ export default class RetypePlugin extends Plugin {
         }
 
         // Notify the sidebar view to render the correct state
-        this.sidebarView?.onDetectionComplete();
+        void this.sidebarView?.onDetectionComplete();
     }
 }
