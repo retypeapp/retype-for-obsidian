@@ -1,7 +1,7 @@
 {
     "id": "retype",
     "name": "Retype",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "minAppVersion": "1.4.0",
     "description": "Build and preview your documentation with Retype.",
     "author": "Retype",
