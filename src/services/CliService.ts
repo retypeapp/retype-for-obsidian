@@ -6,9 +6,6 @@
 
 import { spawn, ChildProcess, execFile } from "child_process";
 import { EventEmitter } from "events";
-import { mkdtemp, rm } from "fs/promises";
-import { tmpdir } from "os";
-import { join } from "path";
 
 import {
     URL_PATTERN,
@@ -151,16 +148,6 @@ export class CliService extends EventEmitter {
         this._status = "starting";
         this._serverUrl = "";
         this.emit(CLI_EVENTS.statusChanged, this._status);
-
-        // Validate key before launching the server
-        if (key) {
-            const isValidKey = await this.validateKey(key);
-            if (!isValidKey) {
-                this.setError(CLI_LOG.keyInvalid);
-                return;
-            }
-            this.emit(CLI_EVENTS.log, CLI_LOG.keyValid);
-        }
 
         const args: string[] = ["start"];
         if (noOpen) {
@@ -430,88 +417,11 @@ export class CliService extends EventEmitter {
                 });
             };
 
-            // If a key is provided, validate it before building
-            if (!key) {
-                runBuild();
-                return;
-            }
-
-            this.validateKey(key)
-                .then((isValidKey) => {
-                    if (!isValidKey) {
-                        this.emit(
-                            CLI_EVENTS.log,
-                            CLI_LOG.errorPrefix.replace(
-                                "{message}",
-                                CLI_LOG.keyInvalid
-                            )
-                        );
-                        reject(new Error(CLI_LOG.keyInvalid));
-                        return;
-                    }
-                    this.emit(CLI_EVENTS.log, CLI_LOG.keyValid);
-                    runBuild();
-                })
-                .catch((err) => {
-                    const msg = CLI_LOG.processError.replace(
-                        "{message}",
-                        (err as Error).message
-                    );
-                    this.emit(
-                        CLI_EVENTS.log,
-                        CLI_LOG.errorPrefix.replace("{message}", msg)
-                    );
-                    reject(new Error(msg));
-                });
+            runBuild();
         });
     }
 
     // ── Private helpers ───────────────────────────────────────────
-
-    /**
-     * Validate a Retype key by running `retype wallet --add` in a temp
-     * HOME directory, then cleaning up. Resolves `true` if the key is
-     * accepted, `false` otherwise.
-     */
-    private async validateKey(key: string): Promise<boolean> {
-        const trimmedKey = key.trim();
-        if (!trimmedKey) {
-            return false;
-        }
-
-        const tempHome = await mkdtemp(join(tmpdir(), "retype-wallet-check-"));
-
-        return new Promise((resolve) => {
-            const env: NodeJS.ProcessEnv = {
-                ...enrichedEnv(),
-                HOME: tempHome,
-            };
-
-            if (process.platform === "win32") {
-                env.USERPROFILE = tempHome;
-            }
-
-            execFile(
-                this.cliPath,
-                ["wallet", "--add", trimmedKey],
-                {
-                    timeout: 10000,
-                    shell: process.platform === "win32",
-                    env,
-                },
-                (err) => {
-                    void rm(tempHome, { recursive: true, force: true }).then(
-                        () => {
-                            resolve(!err);
-                        },
-                        () => {
-                            resolve(!err);
-                        }
-                    );
-                }
-            );
-        });
-    }
 
     /**
      * Process raw output from the CLI, splitting by newline, emitting

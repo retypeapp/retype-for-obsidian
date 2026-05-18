@@ -4,6 +4,8 @@ Install and manage [Retype](https://retype.com) directly from your Obsidian vaul
 
 Desktop-only Obsidian plugin for macOS, Windows, and Linux.
 
+Current plugin version: **1.4.0**
+
 ## Features
 
 - **Sidebar panel** — Start, Stop, and Build buttons for the Retype CLI
@@ -42,6 +44,12 @@ Desktop-only Obsidian plugin for macOS, Windows, and Linux.
    - **Debounce** — delay in milliseconds before Retype rebuilds after a file change
    - **Open browser automatically** — open the default browser when the server starts
    - **Show status bar item** — toggle the Retype status indicator in the Obsidian status bar
+
+## Security and permissions
+
+Retype for Obsidian is a desktop-only integration that launches the local Retype CLI from inside Obsidian. Because of that, automated plugin scans may report shell execution warnings. The plugin uses shell execution only to detect supported command-line tools, install the Retype CLI when you click the install button, and run `retype start`, `retype stop`, or `retype build` for the detected project.
+
+The plugin reads Retype config files through Obsidian's vault API. It does not directly read or write arbitrary files outside the vault. The install command copy button writes only the displayed install command to your system clipboard, and external links open only when clicked.
 
 ## CLI Detection & Installation
 

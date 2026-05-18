@@ -8,9 +8,7 @@
 // ──────────────────────────────────────────────────────────────────────────
 
 import { execFile } from "child_process";
-import * as fs from "fs";
 import { homedir } from "os";
-import * as path from "path";
 
 /** Cached enriched PATH — resolved once, reused everywhere. */
 let _enrichedPath: string | null = null;
@@ -77,8 +75,7 @@ export function enrichedEnv(): NodeJS.ProcessEnv | undefined {
 }
 
 /**
- * Fallback: prepend commonly-used binary directories to the current PATH.
- * Includes auto-detected nvm node bin directory if present.
+ * Fallback: use commonly-used binary directories without reading the host env.
  */
 function buildFallbackPath(): string {
     const home = homedir();
@@ -91,59 +88,5 @@ function buildFallbackPath(): string {
         `${home}/.local/bin`,
     ];
 
-    // Detect nvm's active or default node version
-    const nvmBin = resolveNvmBin(home);
-    if (nvmBin) {
-        extras.unshift(nvmBin);
-    }
-
     return extras.filter(Boolean).join(":");
-}
-
-/**
- * Try to find the nvm-managed node bin directory.
- * Checks the `default` alias first, then falls back to the latest
- * installed version directory.
- */
-function resolveNvmBin(home: string): string | null {
-    const nvmDir = path.join(home, ".nvm");
-    const versionsDir = path.join(nvmDir, "versions", "node");
-
-    try {
-        // Check if the nvm alias/default symlink exists
-        const defaultAlias = path.join(nvmDir, "alias", "default");
-        if (fs.existsSync(defaultAlias)) {
-            const version = fs.readFileSync(defaultAlias, "utf8").trim();
-            // The alias may be a version like "23" or "v23.10.0"
-            // Try exact match first
-            const candidates = fs.readdirSync(versionsDir);
-            const match = candidates.find(
-                (d) => d === version || d === `v${version}` || d.startsWith(`v${version}.`)
-            );
-            if (match) {
-                const binDir = path.join(versionsDir, match, "bin");
-                if (fs.existsSync(binDir)) {
-                    return binDir;
-                }
-            }
-        }
-
-        // Fallback: pick the highest version directory
-        if (fs.existsSync(versionsDir)) {
-            const versions = fs.readdirSync(versionsDir)
-                .filter((d) => d.startsWith("v"))
-                .sort()
-                .reverse();
-            if (versions.length > 0) {
-                const binDir = path.join(versionsDir, versions[0], "bin");
-                if (fs.existsSync(binDir)) {
-                    return binDir;
-                }
-            }
-        }
-    } catch {
-        // nvm not installed — that's fine
-    }
-
-    return null;
 }

@@ -172,7 +172,6 @@ export const CLI_EVENTS = {
 // ── CLI Log Messages ──────────────────────────────────────────────────────
 
 export const CLI_LOG = {
-    keyValid: "[Key validation passed \u2713]",
     serverStopped: "\n[Retype server stopped (exit code {code})]",
     stopping: "\n[Stopping Retype server\u2026]",
     buildComplete: "\n[Build completed \u2713]",
@@ -180,7 +179,6 @@ export const CLI_LOG = {
     commandPrefix: "> {cli} {args}",
     workingDir: "  Working directory: {root}",
     errorPrefix: "[ERROR] {message}",
-    keyInvalid: "Retype key is invalid. Check your Pro key and try again",
     cliNotFound: "Retype CLI not found at \"{path}\". Install it with: npm install retypeapp --global",
     processError: "Process error: {message}",
     alreadyRunning: "Server is already running. Stop it first",

@@ -23,7 +23,7 @@
 }
 
 .retype-is-hidden {
-    display: none !important;
+    display: none;
 }
 
 /* ── Panel Root ──────────────────────────────────────────────── */
@@ -326,6 +326,11 @@
 .retype-btn:disabled {
     opacity: 0.3;
     cursor: not-allowed;
+}
+
+.retype-panel .retype-is-hidden,
+.retype-panel [hidden] {
+    display: none;
 }
 
 /* Stop button — danger styling */

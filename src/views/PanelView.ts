@@ -134,6 +134,7 @@ export class RetypePanelView extends ItemView {
 
     private setHidden(element: HTMLElement | null, hidden: boolean): void {
         element?.classList.toggle(CSS.hidden, hidden);
+        element?.toggleAttribute("hidden", hidden);
     }
 
     // ── Section Builders ──────────────────────────────────────────
