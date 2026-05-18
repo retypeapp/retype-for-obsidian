@@ -52,7 +52,7 @@ export class RetypeSettingTab extends PluginSettingTab {
         containerEl.empty();
 
         // ── Retype Key (password input, stored in SecretStorage) ─
-        const keyDesc = document.createDocumentFragment();
+        const keyDesc = createFragment();
         keyDesc.append("Your Retype ");
         const proLink = keyDesc.createEl("a", { text: "Pro", href: LABELS.settingKeyProUrl });
         proLink.setAttr("target", "_blank");

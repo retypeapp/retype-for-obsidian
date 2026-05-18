@@ -47,7 +47,7 @@ export const DETECTOR_EVENTS = {
 export class CliDetector extends EventEmitter {
     private _lastResult: CliDetectionResult = { found: false };
     private _lastPmResult: PackageManagerResult | null = null;
-    private _pollTimer: ReturnType<typeof setInterval> | null = null;
+    private _pollTimer: number | null = null;
     private _polling = false;
 
     /** Most recent CLI detection result. */
@@ -154,7 +154,7 @@ export class CliDetector extends EventEmitter {
         this.stopPolling();
         this._polling = true;
 
-        this._pollTimer = setInterval(() => {
+        this._pollTimer = activeWindow.setInterval(() => {
             void this.pollForCli();
         }, intervalMs);
     }
@@ -164,7 +164,7 @@ export class CliDetector extends EventEmitter {
      */
     stopPolling(): void {
         if (this._pollTimer) {
-            clearInterval(this._pollTimer);
+            activeWindow.clearInterval(this._pollTimer);
             this._pollTimer = null;
         }
         this._polling = false;

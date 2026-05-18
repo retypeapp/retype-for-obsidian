@@ -238,7 +238,7 @@ export class RetypePanelView extends ItemView {
                 void navigator.clipboard.writeText(command);
                 copyBtn.title = LABELS.copiedTooltip;
                 copyBtn.setAttribute("aria-label", LABELS.copiedTooltip);
-                setTimeout(() => {
+                activeWindow.setTimeout(() => {
                     copyBtn.title = LABELS.copyTooltip;
                     copyBtn.setAttribute("aria-label", LABELS.copyTooltip);
                 }, 2000);

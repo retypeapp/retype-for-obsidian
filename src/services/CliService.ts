@@ -274,12 +274,12 @@ export class CliService extends EventEmitter {
         }
 
         return new Promise((resolve) => {
-            const timer = setTimeout(() => {
+            const timer = activeWindow.setTimeout(() => {
                 resolve();
             }, timeoutMs);
 
             this.once(CLI_EVENTS.stopped, () => {
-                clearTimeout(timer);
+                activeWindow.clearTimeout(timer);
                 resolve();
             });
 

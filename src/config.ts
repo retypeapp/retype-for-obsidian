@@ -265,9 +265,6 @@ export const LOG_PATTERNS = {
 /** Retype config file names to look for. */
 export const CONFIG_FILE_NAMES = ["retype.yml", "retype.yaml"] as const;
 
-/** Regex to extract the title field from a retype.yml file. */
-export const YAML_TITLE_PATTERN = /^\s*title\s*:\s*(.+)$/m;
-
 /** Maximum number of log lines to keep in the output panel. */
 export const MAX_LOG_LINES = 500;
 

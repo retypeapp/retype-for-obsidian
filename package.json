@@ -1,6 +1,6 @@
 {
     "name": "retype-for-obsidian",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "description": "Build and preview your documentation with Retype.",
     "main": "main.js",
     "scripts": {
@@ -22,7 +22,6 @@
     "devDependencies": {
         "@types/node": "^20.11.0",
         "@typescript-eslint/parser": "^8.57.1",
-        "builtin-modules": "^3.3.0",
         "esbuild": "^0.20.0",
         "eslint": "^9.39.4",
         "eslint-plugin-obsidianmd": "^0.1.9",

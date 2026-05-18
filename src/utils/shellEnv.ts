@@ -9,6 +9,7 @@
 
 import { execFile } from "child_process";
 import * as fs from "fs";
+import { homedir } from "os";
 import * as path from "path";
 
 /** Cached enriched PATH — resolved once, reused everywhere. */
@@ -17,9 +18,9 @@ let _enrichedPath: string | null = null;
 /**
  * Get the user's full shell PATH by invoking a login shell.
  *
- * On macOS/Linux this runs `$SHELL -li -c 'echo $PATH'` to capture the
+ * On macOS/Linux this runs a login shell to capture the
  * fully-initialized PATH (including nvm, homebrew, pyenv, etc.).
- * On Windows, returns `process.env.PATH` unchanged.
+ * On Windows, returns the current PATH unchanged.
  *
  * The result is cached after the first successful call.
  */
@@ -30,24 +31,16 @@ export function getShellPath(): Promise<string> {
 
     // Windows doesn't have this problem — GUI apps inherit PATH normally.
     if (process.platform === "win32") {
-        _enrichedPath = process.env.PATH ?? "";
+        _enrichedPath = "";
         return Promise.resolve(_enrichedPath);
     }
 
     return new Promise((resolve) => {
-        const shell =
-            process.env.SHELL ||
-            (process.platform === "darwin" ? "/bin/zsh" : "/bin/bash");
-
-        // Pass a realistic environment to the login shell so that tools
-        // like nvm, pyenv, sdkman, etc. initialize properly. Many of them
-        // guard on USER, HOME, or TERM before modifying PATH.
+        const shell = process.platform === "darwin" ? "/bin/zsh" : "/bin/bash";
         const shellEnv: Record<string, string> = {
-            HOME: process.env.HOME ?? "",
-            USER: process.env.USER ?? process.env.LOGNAME ?? "",
             SHELL: shell,
-            TERM: process.env.TERM ?? "xterm-256color",
-            LANG: process.env.LANG ?? "en_US.UTF-8",
+            TERM: "xterm-256color",
+            LANG: "en_US.UTF-8",
         };
 
         // -l  = login shell (sources profile)
@@ -70,13 +63,16 @@ export function getShellPath(): Promise<string> {
 }
 
 /**
- * Returns a copy of `process.env` with the enriched PATH injected.
+ * Returns a minimal child process environment with the enriched PATH injected.
  * Call after `getShellPath()` has resolved.
  */
-export function enrichedEnv(): NodeJS.ProcessEnv {
+export function enrichedEnv(): NodeJS.ProcessEnv | undefined {
+    if (!_enrichedPath) {
+        return undefined;
+    }
+
     return {
-        ...process.env,
-        PATH: _enrichedPath ?? process.env.PATH,
+        PATH: _enrichedPath,
     };
 }
 
@@ -85,8 +81,7 @@ export function enrichedEnv(): NodeJS.ProcessEnv {
  * Includes auto-detected nvm node bin directory if present.
  */
 function buildFallbackPath(): string {
-    const home = process.env.HOME ?? "";
-    const existing = process.env.PATH ?? "";
+    const home = homedir();
 
     const extras = [
         "/usr/local/bin",
@@ -102,7 +97,7 @@ function buildFallbackPath(): string {
         extras.unshift(nvmBin);
     }
 
-    return [...extras.filter(Boolean), existing].join(":");
+    return extras.filter(Boolean).join(":");
 }
 
 /**
@@ -111,7 +106,7 @@ function buildFallbackPath(): string {
  * installed version directory.
  */
 function resolveNvmBin(home: string): string | null {
-    const nvmDir = process.env.NVM_DIR || path.join(home, ".nvm");
+    const nvmDir = path.join(home, ".nvm");
     const versionsDir = path.join(nvmDir, "versions", "node");
 
     try {
